@@ -160,11 +160,23 @@
       fileList.innerHTML = '<h3>選ばれたファイル:</h3><ul>' + fileNames.map(name => `<li>${name}</li>`).join('') + '</ul>';
     }
 
+    function clearMergedCanvas() {
+      const canvas = document.getElementById('mergedCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      mergedImageUrl = '';
+      document.getElementById('mergedImage').style.display = 'none';
+      document.getElementById('canvas-container').style.display = 'none';
+    }
+
     function mergeImages() {
       if (images.length === 0) {
         alert('画像をアップロードしてください。');
         return;
       }
+
+      clearMergedCanvas(); // 既存内容をクリア
+
       const canvas = document.getElementById('mergedCanvas');
       const ctx = canvas.getContext('2d');
 
@@ -188,7 +200,18 @@
         imgElement.style.display = 'block';
       }, 'image/jpeg');
     }
+
+    // Clear merged canvas and image on button click
+    document.getElementById('imageUpload').addEventListener('click', () => {
+      if (mergedImageUrl) {
+        clearMergedCanvas(); // ボタン押下時にクリア
+        images = [];
+        fileNames = [];
+        updateFileList();
+      }
+    });
   </script>
+
 
 </body>
 
