@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>画像統合アプリ</title>
+  <style>
+    #canvas-container {
+      display: none;
+      margin-top: 20px;
+    }
+
+    canvas {
+      max-width: 100%;
+    }
+
+    #file-list {
+      margin-top: 20px;
+    }
+
+    #drop-area {
+      width: 800px;
+      height: 300px;
+      border: 2px dashed #aaa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 20px auto;
+      text-align: center;
+    }
+
+    #mergedImage {
+      display: block;
+      margin: 20px auto;
+      max-width: 100%;
+    }
+
+    #mergedCanvas {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>画像統合アプリ</h1>
+  <div id="drop-area">ここに画像をドロップ</div>
+  <input type="file" id="imageUpload" accept="image/*" multiple>
+  <button onclick="mergeImages()">統合してダウンロード</button>
+  <div id="file-list"></div>
+  <div id="canvas-container">
+    <canvas id="mergedCanvas"></canvas>
+  </div>
+  <img id="mergedImage" alt="統合された画像">
+
+  <script>
+    let images = [];
+    let fileNames = [];
+    let mergedImageUrl = '';
+    const dropArea = document.getElementById('drop-area');
+
+    document.getElementById('imageUpload').addEventListener('change', handleImageUpload);
+    dropArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropArea.style.border = '2px solid #666';
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+      dropArea.style.border = '2px dashed #aaa';
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropArea.style.border = '2px dashed #aaa';
+      handleImageUpload(e);
+    });
+
+    function handleImageUpload(event) {
+      const files = event.dataTransfer ? event.dataTransfer.files : event.target.files;
+      if (images.length + files.length > 4) {
+        alert('写真は最大4枚までです。');
+        return;
+      }
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.src = e.target.result;
+          img.onload = () => {
+            images.push(img);
+            fileNames.push(file.name);
+            updateFileList();
+          };
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function updateFileList() {
+      const fileList = document.getElementById('file-list');
+      fileList.innerHTML = '<h3>選ばれたファイル:</h3><ul>' + fileNames.map(name => `<li>${name}</li>`).join('') + '</ul>';
+    }
+
+    function mergeImages() {
+      if (images.length === 0) {
+        alert('画像をアップロードしてください。');
+        return;
+      }
+      const canvas = document.getElementById('mergedCanvas');
+      const ctx = canvas.getContext('2d');
+
+      const width = images[0].naturalWidth;
+      const height = images[0].naturalHeight;
+
+      canvas.width = width * 2;
+      canvas.height = height * 2;
+
+      images.forEach((img, index) => {
+        const x = (index % 2) * width;
+        const y = Math.floor(index / 2) * height;
+        ctx.drawImage(img, x, y, width, height);
+      });
+
+      document.getElementById('canvas-container').style.display = 'block';
+      canvas.toBlob((blob) => {
+        mergedImageUrl = URL.createObjectURL(blob);
+        const imgElement = document.getElementById('mergedImage');
+        imgElement.src = mergedImageUrl;
+        imgElement.style.display = 'block';
+        downloadMergedImage();
+      }, 'image/png');
+    }
+
+    function downloadMergedImage() {
+      const link = document.createElement('a');
+      link.href = mergedImageUrl;
+      link.download = 'merged_image.png';
+      link.click();
+    }
+  </script>
+</body>
+
+</html>
