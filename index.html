@@ -122,7 +122,7 @@
           const img = new Image();
           img.src = e.target.result;
           img.onload = () => {
-            const resizedImage = resizeImage(img);
+            const resizedImage = resizeAndCropImage(img);
             images.push(resizedImage);
             fileNames.push(file.name);
             updateFileList();
@@ -132,25 +132,32 @@
       });
     }
 
-    function resizeImage(img) {
+    function resizeAndCropImage(img) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
+      const size = 3000; // Square size
+      canvas.width = size;
+      canvas.height = size;
+
       const aspectRatio = img.naturalWidth / img.naturalHeight;
-      let width, height;
+      let srcWidth, srcHeight, offsetX, offsetY;
+
       if (aspectRatio > 1) {
         // Landscape
-        width = 3000;
-        height = 3000 / aspectRatio;
+        srcWidth = img.naturalHeight;
+        srcHeight = img.naturalHeight;
+        offsetX = (img.naturalWidth - srcWidth) / 2;
+        offsetY = 0;
       } else {
-        // Portrait
-        height = 3000;
-        width = 3000 * aspectRatio;
+        // Portrait or square
+        srcWidth = img.naturalWidth;
+        srcHeight = img.naturalWidth;
+        offsetX = 0;
+        offsetY = (img.naturalHeight - srcHeight) / 2;
       }
 
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(img, 0, 0, width, height);
+      ctx.drawImage(img, offsetX, offsetY, srcWidth, srcHeight, 0, 0, size, size);
 
       return canvas;
     }
@@ -180,16 +187,14 @@
       const canvas = document.getElementById('mergedCanvas');
       const ctx = canvas.getContext('2d');
 
-      const width = images[0].width;
-      const height = images[0].height;
-
-      canvas.width = width * 2;
-      canvas.height = height * 2;
+      const size = 3000;
+      canvas.width = size * 2;
+      canvas.height = size * 2;
 
       images.forEach((img, index) => {
-        const x = (index % 2) * width;
-        const y = Math.floor(index / 2) * height;
-        ctx.drawImage(img, 0, 0, img.width, img.height, x, y, width, height);
+        const x = (index % 2) * size;
+        const y = Math.floor(index / 2) * size;
+        ctx.drawImage(img, 0, 0, size, size, x, y, size, size);
       });
 
       document.getElementById('canvas-container').style.display = 'block';
@@ -211,7 +216,6 @@
       }
     });
   </script>
-
 
 </body>
 
